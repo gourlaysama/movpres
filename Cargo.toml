@@ -1,0 +1,9 @@
+[package]
+
+name = "mov_pres"
+version = "0.0.1"
+authors = [ "Antoine Gourlay <antoine@gourlay.fr>" ]
+
+[dependencies]
+
+gtk = "0.0.6"
