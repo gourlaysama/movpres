@@ -25,23 +25,29 @@ impl Player {
         let instance = vlc::Instance::new().unwrap();
         let mdp = vlc::MediaPlayer::new(&instance).unwrap();
 
-        let p = Arc::new(Player { vlc_instance: instance, media_player: mdp, window: window });
+        let p = Arc::new(Player {
+            vlc_instance: instance,
+            media_player: mdp,
+            window: window,
+        });
 
         p.window.connect_show({
             let pp = p.clone();
             move |_| {
-            let id = gtk_window::gdk_x11_window_get_xid(&pp.window.get_window().unwrap());
-            pp.media_player.set_xwindow(id);
-        }});
+                let id = gtk_window::gdk_x11_window_get_xid(&pp.window.get_window().unwrap());
+                pp.media_player.set_xwindow(id);
+            }
+        });
 
         p.window.connect_delete_event({
             let pp = p.clone();
-            move |_,_| {
+            move |_, _| {
                 pp.media_player.stop();
 
                 gtk::main_quit();
                 Inhibit(false)
-        }});
+            }
+        });
 
         p.style_window();
 
@@ -62,7 +68,9 @@ impl Player {
     }
 
     pub fn toggle_play(&self) {
-        if self.media_player.is_playing() { self.media_player.pause(); } else {
+        if self.media_player.is_playing() {
+            self.media_player.pause();
+        } else {
             self.media_player.play().unwrap();
         }
     }
