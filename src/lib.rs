@@ -9,6 +9,7 @@ use std::sync::Arc;
 use gtk::traits::*;
 use gtk::Window;
 use gtk::signal::Inhibit;
+use vlc::MediaPlayerVideoEx;
 
 mod ffi;
 pub mod gtk_window;
@@ -73,6 +74,10 @@ impl Player {
         } else {
             self.media_player.play().unwrap();
         }
+    }
+
+    pub fn set_fullscreen(&self, fullscren: bool) {
+        self.media_player.set_fullscreen(fullscren);
     }
 
     // internal stuff

@@ -44,8 +44,11 @@ fn main() {
     let stop_button = gtk::Button::new().unwrap();
     stop_button.add(&stop_image);
 
+    let fullscreen_button = gtk::ToggleButton::new_with_label("Fullscreen").unwrap();
+
     buttons.pack_start(&play_button, false, false, 0);
     buttons.pack_start(&stop_button, false, false, 0);
+    buttons.pack_start(&fullscreen_button, false, false, 0);
 
     play_button.connect_clicked({
         let ppl = pl.clone();
@@ -57,6 +60,14 @@ fn main() {
         let ppl = pl.clone();
         move |_| {
             ppl.stop();
+        }
+    });
+    fullscreen_button.connect_clicked({
+        let ppl = pl.clone();
+        let fb = fullscreen_button.clone();
+        move |_| {
+            let fs = fb.get_active();
+            ppl.set_fullscreen(fs);
         }
     });
     buttons.show_all();
