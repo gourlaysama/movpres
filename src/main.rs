@@ -8,6 +8,7 @@ use gtk::traits::*;
 use gtk::signal::Inhibit;
 
 fn main() {
+  init_x11();
   if gtk::init().is_err() {
       println!("Failed to initialize GTK. Exiting.");
       return;
@@ -22,24 +23,40 @@ fn main() {
       }
   };
 
-  init_x11();
+  let pl = Player::new();
 
-  let window = gtk::Window::new(gtk::WindowType::Toplevel).unwrap();
-  window.set_title("Presenter");
-  window.set_default_size(850, 670);
-  window.show_all();
-
-  let pl = Player::new(&window);
+  pl.window.set_title("Presenter");
+  pl.window.set_default_size(850, 670);
+  pl.window.set_window_position(gtk::WindowPosition::Center);
+  pl.window.show_all();
 
   pl.set_media(path);
+
+  let control_window = gtk::Window::new(gtk::WindowType::Toplevel).unwrap();
+  control_window.set_title("Controller");
+  control_window.set_default_size(200, 300);
+
+  let play_button = gtk::Button::new_with_label("Play/Pause").unwrap();
+
+  play_button.connect_clicked({
+      let ppl = pl.clone();
+      move |_| {
+          ppl.toggle_play();
+  }});
+  control_window.add(&play_button);
+
+  control_window.show_all();
+
   pl.play();
 
-  window.connect_delete_event(move |_, _| {
-      pl.stop();
+  pl.window.connect_delete_event({
+      let ppl = pl.clone();
+      move |_, _| {
+        ppl.stop();
 
-      gtk::main_quit();
-      Inhibit(false)
-  });
+        gtk::main_quit();
+        Inhibit(false)
+  }});
 
   gtk::main();
 }
