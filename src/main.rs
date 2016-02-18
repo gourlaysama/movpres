@@ -48,6 +48,7 @@ fn main() {
 }
 
 // libVLC needs this for best playback (harware acceleration)
+// and it needs to happen before gtk::init
 fn init_x11() {
     unsafe {
         x11::xlib::XInitThreads();
