@@ -24,11 +24,9 @@ fn main() {
 
   init_x11();
 
-
   let window = gtk::Window::new(gtk::WindowType::Toplevel).unwrap();
   window.set_title("Presenter");
   window.set_default_size(850, 670);
-  window.set_visible(false);
   window.show_all();
 
   let pl = Player::new(&window);
@@ -42,8 +40,6 @@ fn main() {
       gtk::main_quit();
       Inhibit(false)
   });
-
-  window.set_visible(true);
 
   gtk::main();
 }
