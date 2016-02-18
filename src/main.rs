@@ -5,7 +5,7 @@ extern crate x11;
 
 use mov_pres::Player;
 use gtk::traits::*;
-use gtk::signal::Inhibit;
+
 
 fn main() {
   init_x11();
@@ -25,11 +25,6 @@ fn main() {
 
   let pl = Player::new();
 
-  pl.window.set_title("Presenter");
-  pl.window.set_default_size(850, 670);
-  pl.window.set_window_position(gtk::WindowPosition::Center);
-  pl.window.show_all();
-
   pl.set_media(path);
 
   let control_window = gtk::Window::new(gtk::WindowType::Toplevel).unwrap();
@@ -48,15 +43,6 @@ fn main() {
   control_window.show_all();
 
   pl.play();
-
-  pl.window.connect_delete_event({
-      let ppl = pl.clone();
-      move |_, _| {
-        ppl.stop();
-
-        gtk::main_quit();
-        Inhibit(false)
-  }});
 
   gtk::main();
 }
