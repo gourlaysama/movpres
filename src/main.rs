@@ -3,7 +3,7 @@ extern crate gtk;
 extern crate vlc;
 extern crate x11;
 
-use mov_pres::gtk_window;
+use mov_pres::Player;
 use gtk::traits::*;
 use gtk::signal::Inhibit;
 
@@ -24,12 +24,6 @@ fn main() {
 
   init_x11();
 
-  let instance = vlc::Instance::new().unwrap();
-
-  let md = vlc::Media::new_path(&instance, path).unwrap();
-  let mdp = vlc::MediaPlayer::new(&instance).unwrap();
-
-  mdp.set_media(&md);
 
   let window = gtk::Window::new(gtk::WindowType::Toplevel).unwrap();
   window.set_title("Presenter");
@@ -37,12 +31,13 @@ fn main() {
   window.set_visible(false);
   window.show_all();
 
-  let id = gtk_window::gdk_x11_window_get_xid(&window.get_window().unwrap());
-  mdp.set_xwindow(id);
-  mdp.play().unwrap();
+  let pl = Player::new(&window);
+
+  pl.set_media(path);
+  pl.play();
 
   window.connect_delete_event(move |_, _| {
-      mdp.stop();
+      pl.stop();
 
       gtk::main_quit();
       Inhibit(false)
