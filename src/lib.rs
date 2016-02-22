@@ -11,6 +11,7 @@ use gtk::Window;
 use gtk::widgets::Builder;
 use gtk::signal::Inhibit;
 use vlc::MediaPlayerVideoEx;
+use vlc::MediaPlayerAudioEx;
 
 mod ffi;
 pub mod gtk_window;
@@ -33,12 +34,12 @@ pub struct Player {
 
 impl Player {
     pub fn new() -> Arc<Player> {
-        let glade_src = include_str!("config_window.glade");
+        let glade_src = include_str!("windows.glade");
         let builder = Builder::new_from_string(glade_src).expect("can't find builder");
 
         let play_window = gtk::Window::new(gtk::WindowType::Toplevel).expect("play_window");
         let configure_window = builder_get!(&builder, "configure_window", Window);
-        let control_window = gtk::Window::new(gtk::WindowType::Toplevel).expect("control_window");
+        let control_window = builder_get!(&builder, "control_window", Window);
 
         let instance = vlc::Instance::new().unwrap();
         let mdp = vlc::MediaPlayer::new(&instance).unwrap();
@@ -95,12 +96,49 @@ impl Player {
             }
         });
 
-        builder_get!(&p.builder, "button_quit", gtk::Button).connect_clicked({
+        builder_get!(&p.builder, "button_quit", gtk::Button).connect_clicked(|_| {
+            gtk::main_quit();
+        });
+
+        builder_get!(&p.builder, "button_play", gtk::Button).connect_clicked({
             let pp = p.clone();
             move |_| {
-                gtk::main_quit();
+                pp.media_player.play().unwrap();
             }
         });
+
+        builder_get!(&p.builder, "button_pause", gtk::Button).connect_clicked({
+            let pp = p.clone();
+            move |_| {
+                pp.media_player.pause();
+            }
+        });
+
+        builder_get!(&p.builder, "button_stop", gtk::Button).connect_clicked({
+            let pp = p.clone();
+            move |_| {
+                pp.media_player.stop();
+            }
+        });
+
+        let volume_adjustment = gtk::Adjustment::new(
+            0.0,
+            0.0,
+            100.0,
+            1.0,
+            10.0,
+            10.0
+        ).unwrap();
+        builder_get!(&p.builder, "button_volume", gtk::VolumeButton).set_adjustment(&volume_adjustment);
+
+        volume_adjustment.connect_value_changed({
+            let pp = p.clone();
+            move |a| {
+                let volume = a.get_value();
+                pp.media_player.set_volume(volume as i32).unwrap();
+            }
+        });
+        volume_adjustment.set_value(50.0);
 
         p
     }
@@ -130,7 +168,7 @@ impl Player {
         self.media_player.set_fullscreen(fullscren);
     }
 
-    pub fn configure(&self) {
+    pub fn show_configure(&self) {
         self.configure_window.show_all();
     }
 
