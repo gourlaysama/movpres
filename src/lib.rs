@@ -19,7 +19,7 @@ pub mod gtk_window;
 // macro for getting stuff from a builder
 macro_rules! builder_get {
     ( $b:expr, $name:expr, $typ:ty ) => {
-        unsafe { $b.get_object::<$typ>($name).expect("$name") }
+        unsafe { $b.get_object::<$typ>($name).expect(&format!("cannot find '{}'.'", $name)) }
     }
 }
 
