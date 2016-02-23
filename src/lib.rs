@@ -12,6 +12,7 @@ use gtk::widgets::Builder;
 use gtk::signal::Inhibit;
 use vlc::MediaPlayerVideoEx;
 use vlc::MediaPlayerAudioEx;
+use vlc::State;
 
 mod ffi;
 pub mod gtk_window;
@@ -101,14 +102,17 @@ impl Player {
         builder_get!(&p.builder, "button_play", gtk::Button).connect_clicked({
             let pp = p.clone();
             move |_| {
-                pp.media_player.play().unwrap();
-            }
-        });
-
-        builder_get!(&p.builder, "button_pause", gtk::Button).connect_clicked({
-            let pp = p.clone();
-            move |_| {
-                pp.media_player.pause();
+                match pp.media_player.state() {
+                    State::Playing | State::Paused => pp.media_player.pause(),
+                    _ => pp.media_player.play().unwrap()
+                };
+                builder_get!(&pp.builder, "button_play", gtk::Button).set_image(
+                    &gtk::Image::new_from_icon_name(if pp.media_player.is_playing() {
+                        "media-playback-start"
+                    } else {
+                        "media-playback-pause"
+                    }, 4).unwrap()
+                );
             }
         });
 
@@ -116,6 +120,9 @@ impl Player {
             let pp = p.clone();
             move |_| {
                 pp.media_player.stop();
+                builder_get!(&pp.builder, "button_play", gtk::Button).set_image(
+                    &gtk::Image::new_from_icon_name("media-playback-start", 4).unwrap()
+                );
             }
         });
 
@@ -137,6 +144,13 @@ impl Player {
             }
         });
         volume_adjustment.set_value(50.0);
+
+        builder_get!(&p.builder, "button_fullscreen", gtk::Button).connect_clicked({
+            let pp = p.clone();
+            move |_| {
+                pp.media_player.toggle_fullscreen();
+            }
+        });
 
         p
     }
