@@ -37,7 +37,7 @@ impl Player {
         let glade_src = include_str!("windows.glade");
         let builder = Builder::new_from_string(glade_src).expect("can't find builder");
 
-        let play_window = gtk::Window::new(gtk::WindowType::Toplevel).expect("play_window");
+        let play_window = builder_get!(&builder, "play_window", Window);
         let configure_window = builder_get!(&builder, "configure_window", Window);
         let control_window = builder_get!(&builder, "control_window", Window);
 
@@ -52,8 +52,6 @@ impl Player {
             configure_window: configure_window,
             control_window: control_window,
         });
-
-        p.style_windows();
 
         p.play_window.connect_show({
             let pp = p.clone();
@@ -170,17 +168,5 @@ impl Player {
 
     pub fn show_configure(&self) {
         self.configure_window.show_all();
-    }
-
-    // internal stuff
-
-    fn style_windows(&self) {
-        self.play_window.set_title("Presenter Output");
-        self.play_window.set_default_size(850, 670);
-        self.play_window.set_window_position(gtk::WindowPosition::Center);
-
-        self.control_window.set_title("Controller");
-        self.control_window.set_default_size(100, 32);
-
     }
 }
