@@ -10,6 +10,7 @@ use gtk::traits::*;
 use gtk::Window;
 use gtk::widgets::Builder;
 use gtk::signal::Inhibit;
+use gtk::signal::DialogSignals;
 use vlc::MediaPlayerVideoEx;
 use vlc::MediaPlayerAudioEx;
 use vlc::State;
@@ -100,14 +101,27 @@ impl Player {
             move |_| {
                 match builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
                           .get_filename() {
-                    Some(name) => {
-                        pp.set_media(&name);
+                    Some(path) => {
+                        let md = vlc::Media::new_path(&pp.vlc_instance, &path).unwrap();
+                        pp.media_player.set_media(&md);
                         pp.configure_window.hide();
                         pp.play_window.show_all();
                         pp.control_window.show_all();
                         pp.media_player.play().unwrap();
                     }
-                    None => (),
+                    None => {
+                        let dialog =
+                            gtk::MessageDialog::new_with_markup(Some(&pp.configure_window),
+                                                                gtk::DIALOG_MODAL,
+                                                                gtk::MessageType::Error,
+                                                                gtk::ButtonsType::Close,
+                                                                "Please select a video file.")
+                                .unwrap();
+                        dialog.connect_response(|d, _| {
+                            d.hide();
+                        });
+                        dialog.run();
+                    }
                 }
             }
         });
@@ -129,7 +143,8 @@ impl Player {
                                                                } else {
                                                                    "media-playback-pause"
                                                                },
-                                                               4).unwrap());
+                                                               4)
+                                    .unwrap());
             }
         });
 
@@ -166,8 +181,7 @@ impl Player {
     }
 
     pub fn set_media(&self, path: &str) {
-        let md = vlc::Media::new_path(&self.vlc_instance, path).unwrap();
-        self.media_player.set_media(&md);
+        builder_get!(&self.builder, "button_file", gtk::FileChooserDialog).set_filename(path);
     }
 
     pub fn play(&self) {
