@@ -85,13 +85,30 @@ impl Player {
             Inhibit(false)
         });
 
+        builder_get!(&p.builder, "button_save", gtk::Button).connect_clicked({
+            let pp = p.clone();
+            move |_| {
+                let n = builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
+                            .get_filename()
+                            .unwrap();
+                println!("{}", n)
+            }
+        });
+
         builder_get!(&p.builder, "button_start", gtk::Button).connect_clicked({
             let pp = p.clone();
             move |_| {
-                pp.configure_window.hide();
-                pp.play_window.show_all();
-                pp.control_window.show_all();
-                pp.media_player.play().unwrap();
+                match builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
+                          .get_filename() {
+                    Some(name) => {
+                        pp.set_media(&name);
+                        pp.configure_window.hide();
+                        pp.play_window.show_all();
+                        pp.control_window.show_all();
+                        pp.media_player.play().unwrap();
+                    }
+                    None => (),
+                }
             }
         });
 
@@ -104,15 +121,15 @@ impl Player {
             move |_| {
                 match pp.media_player.state() {
                     State::Playing | State::Paused => pp.media_player.pause(),
-                    _ => pp.media_player.play().unwrap()
+                    _ => pp.media_player.play().unwrap(),
                 };
-                builder_get!(&pp.builder, "button_play", gtk::Button).set_image(
-                    &gtk::Image::new_from_icon_name(if pp.media_player.is_playing() {
-                        "media-playback-start"
-                    } else {
-                        "media-playback-pause"
-                    }, 4).unwrap()
-                );
+                builder_get!(&pp.builder, "button_play", gtk::Button)
+                    .set_image(&gtk::Image::new_from_icon_name(if pp.media_player.is_playing() {
+                                                                   "media-playback-start"
+                                                               } else {
+                                                                   "media-playback-pause"
+                                                               },
+                                                               4).unwrap());
             }
         });
 
@@ -120,21 +137,14 @@ impl Player {
             let pp = p.clone();
             move |_| {
                 pp.media_player.stop();
-                builder_get!(&pp.builder, "button_play", gtk::Button).set_image(
-                    &gtk::Image::new_from_icon_name("media-playback-start", 4).unwrap()
-                );
+                builder_get!(&pp.builder, "button_play", gtk::Button)
+                    .set_image(&gtk::Image::new_from_icon_name("media-playback-start", 4).unwrap());
             }
         });
 
-        let volume_adjustment = gtk::Adjustment::new(
-            0.0,
-            0.0,
-            100.0,
-            1.0,
-            10.0,
-            10.0
-        ).unwrap();
-        builder_get!(&p.builder, "button_volume", gtk::VolumeButton).set_adjustment(&volume_adjustment);
+        let volume_adjustment = gtk::Adjustment::new(0.0, 0.0, 100.0, 1.0, 10.0, 10.0).unwrap();
+        builder_get!(&p.builder, "button_volume", gtk::VolumeButton)
+            .set_adjustment(&volume_adjustment);
 
         volume_adjustment.connect_value_changed({
             let pp = p.clone();
