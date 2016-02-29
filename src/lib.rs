@@ -1,6 +1,7 @@
 extern crate gdk_sys;
 extern crate gdk;
 extern crate gtk;
+extern crate gtk_sys;
 extern crate glib;
 extern crate vlc;
 
@@ -10,10 +11,10 @@ use gtk::traits::*;
 use gtk::Window;
 use gtk::widgets::Builder;
 use gtk::signal::Inhibit;
-use gtk::signal::DialogSignals;
 use vlc::MediaPlayerVideoEx;
 use vlc::MediaPlayerAudioEx;
 use vlc::State;
+use gtk_window::FileChooserButtonSignals;
 
 mod ffi;
 pub mod gtk_window;
@@ -63,6 +64,15 @@ impl Player {
             }
         });
 
+        p.control_window.connect_show({
+            let pp = p.clone();
+            move |_| {
+                let media = pp.media_player.get_media().unwrap();
+                let path = media.mrl().unwrap();
+                builder_get!(&pp.builder, "label_file", gtk::Label).set_text(&path);
+            }
+        });
+
         p.control_window.connect_delete_event({
             let pp = p.clone();
             move |_, _| {
@@ -86,43 +96,26 @@ impl Player {
             Inhibit(false)
         });
 
-        builder_get!(&p.builder, "button_save", gtk::Button).connect_clicked({
+        builder_get!(&p.builder, "button_file", gtk::Widget).connect_file_set({
             let pp = p.clone();
             move |_| {
-                let n = builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
-                            .get_filename()
-                            .unwrap();
-                println!("{}", n)
+                let path = builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
+                               .get_filename()
+                               .unwrap();
+                let md = vlc::Media::new_path(&pp.vlc_instance, &path).unwrap();
+                pp.media_player.set_media(&md);
+
+                builder_get!(&pp.builder, "button_start", gtk::Button).set_sensitive(true);
             }
         });
 
         builder_get!(&p.builder, "button_start", gtk::Button).connect_clicked({
             let pp = p.clone();
             move |_| {
-                match builder_get!(&pp.builder, "button_file", gtk::FileChooserDialog)
-                          .get_filename() {
-                    Some(path) => {
-                        let md = vlc::Media::new_path(&pp.vlc_instance, &path).unwrap();
-                        pp.media_player.set_media(&md);
-                        pp.configure_window.hide();
-                        pp.play_window.show_all();
-                        pp.control_window.show_all();
-                        pp.media_player.play().unwrap();
-                    }
-                    None => {
-                        let dialog =
-                            gtk::MessageDialog::new_with_markup(Some(&pp.configure_window),
-                                                                gtk::DIALOG_MODAL,
-                                                                gtk::MessageType::Error,
-                                                                gtk::ButtonsType::Close,
-                                                                "Please select a video file.")
-                                .unwrap();
-                        dialog.connect_response(|d, _| {
-                            d.hide();
-                        });
-                        dialog.run();
-                    }
-                }
+                pp.configure_window.hide();
+                pp.play_window.show_all();
+                pp.control_window.show_all();
+                pp.media_player.play().unwrap();
             }
         });
 
